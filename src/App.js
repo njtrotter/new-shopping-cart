@@ -5,10 +5,10 @@ const App = () => {
   const products = Object.values(data);
   useEffect(() => {
     const fetchProducts = async () => {
-      console.log('fetching now');
+      //console.log('fetching now');
       const response = await fetch('/data/products.json');
       const json = await response.json();
-      console.log(json.length);
+      //console.log(json.length);
       setData(json);
     };
     fetchProducts();
