@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import 'rbx/index.css';
 import { Button, Card, Container, Column } from 'rbx';
+import Sidebar from 'react-sidebar';
 
 //keeps track of products in cart and addition of new products
 //TODO: add removal of items in cart
@@ -26,7 +27,7 @@ const useCartProducts = () => {
 const App = () => {
   const [data, setData] = useState({});
   //state for shopping cart, initially set to closed
-  const [shoopingCartOpen, setShoppingCartOpen] = useState(false);
+  const [shopingCartOpen, setShoppingCartOpen] = useState(false);
   const products = Object.values(data);
   const [cartProducts, addProductToCart] = useCartProducts();
   useEffect(() => {
@@ -41,6 +42,14 @@ const App = () => {
   }, []);
 
   return (
+    
+    <Sidebar
+      sidebar={<ShoppingCart
+        cartProducts={cartProducts} />}
+      open={shopingCartOpen}
+      onSetOpen={setShoppingCartOpen}
+      pullRight
+  >
     <Container>
       <Button onClick={() => setShoppingCartOpen(true)}>
            Open Shopping Cart
@@ -50,6 +59,7 @@ const App = () => {
         {products.map(product => <Product product={product} addProductToCart={addProductToCart}></Product>)}
       </Column.Group>
     </Container>
+  </Sidebar>
   );
 };
 
@@ -61,17 +71,17 @@ const Product = ({product, addProductToCart}) => {
       <Card.Header>{product.title}</Card.Header>
       <Card.Image><img src={`/data/products/${product.sku}_2.jpg`} alt="product"/></Card.Image>
       <Card.Content>{product.description}</Card.Content>
-  <Card.Footer>{product.currencyFormat}{product.price}</Card.Footer>
-      <Card.Footer.Item>
-        <Button.Group>
-          <SizeSelectorButton setSize={setSize} selectedSize={productSize} size="S" />
-          <SizeSelectorButton setSize={setSize} selectedSize={productSize} size="M" />
-          <SizeSelectorButton setSize={setSize} selectedSize={productSize} size="L" />
-          <SizeSelectorButton setSize={setSize} selectedSize={productSize} size="XL" />
-          <Button onClick={() => productSize ? addProductToCart(product, productSize) : alert("You need to choose your product size!")}>
-                     Add to Cart!</Button>
-        </Button.Group> 
-      </Card.Footer.Item>
+      <Card.Footer>{product.currencyFormat}{product.price}</Card.Footer>
+        <Card.Footer.Item>
+          <Button.Group>
+            <SizeSelectorButton setSize={setSize} selectedSize={productSize} size="S" />
+            <SizeSelectorButton setSize={setSize} selectedSize={productSize} size="M" />
+            <SizeSelectorButton setSize={setSize} selectedSize={productSize} size="L" />
+            <SizeSelectorButton setSize={setSize} selectedSize={productSize} size="XL" />
+            <Button onClick={() => productSize ? addProductToCart(product, productSize) : alert("You need to choose your product size!")}>
+                      Add to Cart!</Button>
+          </Button.Group> 
+        </Card.Footer.Item>
     </Card>
   </Column>)
 };
@@ -90,9 +100,36 @@ const SizeSelectorButton = ({ setSize, selectedSize, size }) => {
   );
 }
 
-const ShoppingCart = ()=> {
-  //const { shoppingCart, open, setOpen } = useContext(ShoppingCartContext);
-//return()
-};
+const ShoppingCart = ({ cartProducts }) => {
+  console.log(cartProducts);
+  return (
+      <Card>
+          <Card.Header centered>
+              Cart
+          </Card.Header>
+          <Card.Content>
+              {cartProducts.map(product =>
+                  <ShoppingCartProduct
+                      key={product.sku}
+                      product={product}/>
+              )}
+              <p>Subtotal: {cartProducts.reduce((total, p) => total + p.price * p.quantity, 0)}</p>
+              <Button>Checkout</Button>
+          </Card.Content>
+      </Card>
+  );
+}
+const ShoppingCartProduct = ({product}) => {
+  return (
+    <Card>
+      <Card.Header>{product.title}</Card.Header>
+      <Card.Image><img src={`/data/products/${product.sku}_2.jpg`} alt="product"/></Card.Image>
+      <Card.Content>{product.description}</Card.Content>
+      <Card.Footer>{product.currencyFormat}{product.price}</Card.Footer>
+      <Card.Footer>Quantity: {product.quantity}</Card.Footer>
+      <Card.Footer>Size: {product.size}</Card.Footer>
+    </Card>
+  );
+}
 
 export default App;
