@@ -9,9 +9,9 @@ const useCartProducts = () => {
   const [cartProducts, setCartProducts] = useState([]);
   const addProductToCart = (p, size) => {
     setCartProducts(
-      cartProducts.find(product => product.sku === p.sku) ?
+      cartProducts.find(product => product.sku === p.sku && product.size === size) ?
         cartProducts.map(product =>
-          product.sku === p.sku ?
+          product.sku === p.sku && product.size === size ?
             { ...product, quantity: product.quantity + 1 }
             :
             product
@@ -20,7 +20,7 @@ const useCartProducts = () => {
         [{ ...p, size, quantity: 1 }].concat(cartProducts)
     );
   }
-  const removeProductFromCart = (p) => {
+  const removeProductFromCart = (p, size) => {
     setCartProducts(
       cartProducts.map(product =>
         product.sku === p.sku && product.quantity > 0 ?
@@ -36,19 +36,32 @@ const useCartProducts = () => {
 
 const App = () => {
   const [data, setData] = useState({});
+  const [inventory, setInventory] = useState(false);
   //state for shopping cart, initially set to closed
   const [shopingCartOpen, setShoppingCartOpen] = useState(false);
   const products = Object.values(data);
   const [cartProducts, addProductToCart, removeProductFromCart] = useCartProducts();
   useEffect(() => {
     const fetchProducts = async () => {
-      //console.log('fetching now');
       const response = await fetch('/data/products.json');
       const json = await response.json();
-      //console.log(json.length);
       setData(json);
     };
+    
+    const fetchProductInventory = async () => {
+      const response = await fetch('/data/inventory.json');
+      if(!response.ok){
+        console.log("inventory lost!")
+      }
+      else{
+        console.log("inventory loaded!")
+      }
+      const json = await response.json();
+      console.log(json);
+      setInventory(json);
+    };
     fetchProducts();
+    fetchProductInventory();
   }, []);
 
   return (
@@ -66,14 +79,15 @@ const App = () => {
          </Button>
 
       <Column.Group multiline={true}>
-        {products.map(product => <Product product={product} addProductToCart={addProductToCart}></Product>)}
+        {!inventory ? "Loading inventory..." : 
+        products.map(product => <Product key={product.sku} product={product} inventory={inventory} addProductToCart={addProductToCart}></Product>)}
       </Column.Group>
     </Container>
   </Sidebar>
   );
 };
 
-const Product = ({product, addProductToCart}) => {
+const Product = ({product, inventory, addProductToCart}) => {
   const [productSize, setSize] = useState("");
   return (
   <Column size={4}>
@@ -83,14 +97,27 @@ const Product = ({product, addProductToCart}) => {
       <Card.Content>{product.description}</Card.Content>
       <Card.Footer>{product.currencyFormat}{product.price}</Card.Footer>
         <Card.Footer.Item>
+        {!inventory ? "Loading inventory..." : 
+          inventory[product.sku]["S"] === 0 && inventory[product.sku]["S"] !== 0 && inventory[product.sku]["S"] !== 0 && inventory[product.sku]["S"] !== 0 ?
+          "No Products Available" :
           <Button.Group>
-            <SizeSelectorButton setSize={setSize} selectedSize={productSize} size="S" />
-            <SizeSelectorButton setSize={setSize} selectedSize={productSize} size="M" />
-            <SizeSelectorButton setSize={setSize} selectedSize={productSize} size="L" />
-            <SizeSelectorButton setSize={setSize} selectedSize={productSize} size="XL" />
+            {inventory[product.sku]["S"] !== 0 ? (
+              <SizeSelectorButton setSize={setSize} selectedSize={productSize} size="S" />
+            ) : null}
+            {inventory[product.sku]["M"] !== 0 ? (
+              <SizeSelectorButton setSize={setSize} selectedSize={productSize} size="M" />
+            ) : null}
+            {inventory[product.sku]["L"] !== 0 ? (
+              <SizeSelectorButton setSize={setSize} selectedSize={productSize} size="L" />
+            ) : null}
+            {inventory[product.sku]["XL"] !== 0 ? (
+              <SizeSelectorButton setSize={setSize} selectedSize={productSize} size="XL" />
+            ) : null}
             <Button onClick={() => productSize ? addProductToCart(product, productSize) : alert("You need to choose your product size!")}>
                       Add to Cart!</Button>
           </Button.Group> 
+          
+        }     
         </Card.Footer.Item>
     </Card>
   </Column>)
@@ -114,7 +141,7 @@ const ShoppingCart = ({ cartProducts, removeProductFromCart }) => {
   console.log(cartProducts);
   return (
       <Card>
-          <Card.Header centered>
+          <Card.Header >
               Cart
           </Card.Header>
           <Card.Content>
@@ -141,7 +168,7 @@ const ShoppingCartProduct = ({product, removeProductFromCart}) => {
       <Card.Footer>Quantity: {product.quantity}</Card.Footer>
       <Card.Footer>Size: {product.size}</Card.Footer>
       <Card.Footer.Item>
-        <Button onClick={() => removeProductFromCart(product)}>
+        <Button onClick={() => removeProductFromCart(product, product.size)}>
                       Remove From Cart</Button>
                       </Card.Footer.Item>
     </Card>
