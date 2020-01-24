@@ -2,9 +2,21 @@ import React, { useEffect, useState } from 'react';
 import 'rbx/index.css';
 import { Button, Card, Container, Column } from 'rbx';
 import Sidebar from 'react-sidebar';
+import firebase from 'firebase/app';
+import 'firebase/database';
 
-//keeps track of products in cart and addition of new products
-//TODO: add removal of items in cart
+var firebaseConfig = {
+  apiKey: "AIzaSyAHQqR3gafeRU--l2UxBZHghg8NzgxeWQA",
+  authDomain: "new-shopping-1232f.firebaseapp.com",
+  databaseURL: "https://new-shopping-1232f.firebaseio.com",
+  projectId: "new-shopping-1232f",
+  storageBucket: "new-shopping-1232f.appspot.com",
+  messagingSenderId: "783985721956",
+  appId: "1:783985721956:web:b0be5b26866330db871571"
+};
+firebase.initializeApp(firebaseConfig);
+const db = firebase.database().ref();
+
 const useCartProducts = () => {
   const [cartProducts, setCartProducts] = useState([]);
   const addProductToCart = (p, size) => {
@@ -47,25 +59,14 @@ const App = () => {
       const json = await response.json();
       setData(json);
     };
-    
-    const fetchProductInventory = async () => {
-      const response = await fetch('/data/inventory.json');
-      if(!response.ok){
-        console.log("inventory lost!")
+    const fetchProductInventory = snap => {
+        if (snap.val()) setInventory(snap.val());
       }
-      else{
-        console.log("inventory loaded!")
-      }
-      const json = await response.json();
-      console.log(json);
-      setInventory(json);
-    };
+    db.on('value', fetchProductInventory, error => alert(error));
     fetchProducts();
-    fetchProductInventory();
+    return () => { db.off('value', fetchProductInventory); };
   }, []);
-
   return (
-    
     <Sidebar
       sidebar={<ShoppingCart
         cartProducts={cartProducts}removeProductFromCart={removeProductFromCart} />}
@@ -86,7 +87,6 @@ const App = () => {
   </Sidebar>
   );
 };
-
 const Product = ({product, inventory, addProductToCart}) => {
   const [productSize, setSize] = useState("");
   return (
@@ -122,7 +122,6 @@ const Product = ({product, inventory, addProductToCart}) => {
     </Card>
   </Column>)
 };
-
 const SizeSelectorButton = ({ setSize, selectedSize, size }) => {
   return (
       size === selectedSize ?
@@ -136,7 +135,6 @@ const SizeSelectorButton = ({ setSize, selectedSize, size }) => {
 
   );
 }
-
 const ShoppingCart = ({ cartProducts, removeProductFromCart }) => {
   console.log(cartProducts);
   return (
@@ -174,5 +172,4 @@ const ShoppingCartProduct = ({product, removeProductFromCart}) => {
     </Card>
   );
 }
-
 export default App;
