@@ -59,7 +59,7 @@ const useCartProducts = () => {
 }
 
 const App = () => {
-  const [user, setUser] = useState(null);
+  const [user, setUser] = useState(false);
   const [data, setData] = useState({});
   const [inventory, setInventory] = useState(false);
   //state for shopping cart, initially set to closed
@@ -85,7 +85,7 @@ const App = () => {
   return (
     <Sidebar
       sidebar={<ShoppingCart
-        cartProducts={cartProducts}removeProductFromCart={removeProductFromCart} />}
+        cartProducts={cartProducts} inventory={inventory} removeProductFromCart={removeProductFromCart} user={user} />}
       open={shopingCartOpen}
       onSetOpen={setShoppingCartOpen}
       pullRight
@@ -171,7 +171,7 @@ const SizeSelectorButton = ({ setSize, selectedSize, size }) => {
 
   );
 }
-const ShoppingCart = ({ cartProducts, removeProductFromCart }) => {
+const ShoppingCart = ({ cartProducts, inventory, removeProductFromCart, user}) => {
   console.log(cartProducts);
   return (
       <Card>
@@ -187,10 +187,24 @@ const ShoppingCart = ({ cartProducts, removeProductFromCart }) => {
                       />
               )}
               <p>Subtotal: {cartProducts.reduce((total, p) => total + p.price * p.quantity, 0)}</p>
-              <Button>Checkout</Button>
+              {!user ? "Please login first!" : 
+              <Button onClick={() => cartCheckout(cartProducts={cartProducts}, inventory={inventory}, user={user})}>Checkout</Button>}
           </Card.Content>
       </Card>
   );
+}
+const cartCheckout = ({cartProducts, inventory}) => {
+  db.transaction(inventory => {
+      if (inventory) {
+          Object.values(cartProducts)
+              .forEach(item => {
+                  console.log(item);
+                  inventory[item.sku][item.size] -= item.quantity;
+              })
+      }
+      return inventory;
+  });
+  alert("You Checked Out. Awesome!")
 }
 const ShoppingCartProduct = ({product, removeProductFromCart}) => {
   return (
