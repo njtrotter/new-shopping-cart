@@ -20,8 +20,18 @@ const useCartProducts = () => {
         [{ ...p, size, quantity: 1 }].concat(cartProducts)
     );
   }
+  const removeProductFromCart = (p) => {
+    setCartProducts(
+      cartProducts.map(product =>
+        product.sku === p.sku && product.quantity > 0 ?
+          { ...product, quantity: product.quantity - 1 }
+          :
+          product
+      ) 
+    );
+  }
   
-  return [cartProducts, addProductToCart];
+  return [cartProducts, addProductToCart, removeProductFromCart];
 }
 
 const App = () => {
@@ -29,7 +39,7 @@ const App = () => {
   //state for shopping cart, initially set to closed
   const [shopingCartOpen, setShoppingCartOpen] = useState(false);
   const products = Object.values(data);
-  const [cartProducts, addProductToCart] = useCartProducts();
+  const [cartProducts, addProductToCart, removeProductFromCart] = useCartProducts();
   useEffect(() => {
     const fetchProducts = async () => {
       //console.log('fetching now');
@@ -45,7 +55,7 @@ const App = () => {
     
     <Sidebar
       sidebar={<ShoppingCart
-        cartProducts={cartProducts} />}
+        cartProducts={cartProducts}removeProductFromCart={removeProductFromCart} />}
       open={shopingCartOpen}
       onSetOpen={setShoppingCartOpen}
       pullRight
@@ -100,7 +110,7 @@ const SizeSelectorButton = ({ setSize, selectedSize, size }) => {
   );
 }
 
-const ShoppingCart = ({ cartProducts }) => {
+const ShoppingCart = ({ cartProducts, removeProductFromCart }) => {
   console.log(cartProducts);
   return (
       <Card>
@@ -111,7 +121,9 @@ const ShoppingCart = ({ cartProducts }) => {
               {cartProducts.map(product =>
                   <ShoppingCartProduct
                       key={product.sku}
-                      product={product}/>
+                      product={product}
+                      removeProductFromCart={removeProductFromCart}
+                      />
               )}
               <p>Subtotal: {cartProducts.reduce((total, p) => total + p.price * p.quantity, 0)}</p>
               <Button>Checkout</Button>
@@ -119,7 +131,7 @@ const ShoppingCart = ({ cartProducts }) => {
       </Card>
   );
 }
-const ShoppingCartProduct = ({product}) => {
+const ShoppingCartProduct = ({product, removeProductFromCart}) => {
   return (
     <Card>
       <Card.Header>{product.title}</Card.Header>
@@ -128,6 +140,10 @@ const ShoppingCartProduct = ({product}) => {
       <Card.Footer>{product.currencyFormat}{product.price}</Card.Footer>
       <Card.Footer>Quantity: {product.quantity}</Card.Footer>
       <Card.Footer>Size: {product.size}</Card.Footer>
+      <Card.Footer.Item>
+        <Button onClick={() => removeProductFromCart(product)}>
+                      Remove From Cart</Button>
+                      </Card.Footer.Item>
     </Card>
   );
 }
